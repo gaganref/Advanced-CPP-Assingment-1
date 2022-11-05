@@ -23,7 +23,7 @@ Node::~Node() {
 HybridTable::HybridTable() {
     total_array_size = INITIAL_ARRAY_SIZE;
     array_ = new int[total_array_size] {0};   // Initializes array_ with all values as 0
-    used_array_size = total_array_size;
+//    used_array_size = total_array_size;
     list_ = nullptr;
 }
 
@@ -32,7 +32,6 @@ HybridTable::HybridTable(const int *p, int n) {
     array_ = new int[total_array_size];
     for (int itr = 0; itr < total_array_size; itr++) {
         array_[itr] = p[itr];
-        used_array_size += 1;
     }
 
     list_ = nullptr;
@@ -41,16 +40,16 @@ HybridTable::HybridTable(const int *p, int n) {
 HybridTable::~HybridTable() {
     // Destructor to be implemented
 
-    delete[] array_;
+    delete [] array_;
     deleteAllNodes();
 }
 
 HybridTable::HybridTable(const HybridTable& other) {
     total_array_size = other.total_array_size;
-    used_array_size = other.used_array_size;
+//    used_array_size = other.used_array_size;
     array_ = new int[total_array_size];   // initialize a new array with the other array size
 
-    for (int itr = 0; itr < used_array_size; itr++) {
+    for (int itr = 0; itr < total_array_size; itr++) {
         array_[itr] = other.array_[itr];  // copy the values of other array
     }
 
@@ -73,14 +72,14 @@ HybridTable::HybridTable(const HybridTable& other) {
 HybridTable& HybridTable::operator=(const HybridTable& other) {
 	if(this != &other){ //To make sure the object is assigning to itself (ex: x=x)
         //delete previous values
-        delete []array_;
+        delete [] array_;
         deleteAllNodes();
 
         total_array_size = other.total_array_size;
-        used_array_size = other.used_array_size;
+//        used_array_size = other.used_array_size;
         array_ = new int[total_array_size];   // initialize a new array with the other array size
 
-        for (int itr = 0; itr < used_array_size; itr++) {
+        for (int itr = 0; itr < total_array_size; itr++) {
             array_[itr] = other.array_[itr];  // copy the values of other array
         }
 
@@ -104,7 +103,7 @@ HybridTable& HybridTable::operator=(const HybridTable& other) {
 }
 
 int HybridTable::get(int i) const {
-	if((i < used_array_size) && (i >= 0)){
+	if((i < total_array_size) && (i >= 0)){
         return array_[i];
     }
 
@@ -121,10 +120,6 @@ void HybridTable::set(int i, int val) {
         return;
     }
 
-    //Debug
-//    float test = calcPercent(19, 27);
-//    cout << test << endl;
-
 
     /* @TODO
      * array size should in powers of 2, For example: 2pow(3) = 8 means range from [0-7]
@@ -136,14 +131,19 @@ void HybridTable::set(int i, int val) {
     // introduce the new value into the list and then check for the resizing of array
     insertNodeAtIndex(i, val);
 
+    int new_array_size = calcNewArraySize();
+    if(new_array_size > total_array_size){
+        resizeArray(new_array_size);
+    }
+//    cout << "array size: " << endl << this->toString() << endl;
 }
 
 string HybridTable::toString() const {
 	string out_string;
 
-    for(int itr=0; itr < used_array_size; itr++){
+    for(int itr=0; itr < total_array_size; itr++){
         out_string += to_string(itr) + " : " + to_string(array_[itr]);
-        if(itr < used_array_size-1){
+        if(itr < total_array_size-1){
             out_string += "\n";
         }
     }
@@ -155,11 +155,12 @@ string HybridTable::toString() const {
 }
 
 int HybridTable::getArraySize() const {
-
+//    cout << "array size: " << endl << this->toString() << endl;
 	return total_array_size;
 }
 
 int HybridTable::getTotalSize() const {
+//    cout << "Total array size: " << endl << this->toString() << endl;
     return total_array_size + getListLength();
 }
 
@@ -245,6 +246,46 @@ void HybridTable::removeNodeAfter(Node* node) {
     delete temp_node;
 }
 
+void HybridTable::removeNode(Node* node) {
+    if(node == nullptr){
+        return;
+    }
+
+    if(node == list_){
+        removeHeadNode();
+        return;
+    }
+
+    Node* previous_node = findPreviousNode(node);
+
+    removeNodeAfter(previous_node);
+}
+
+void HybridTable::removeHeadNode() {
+    if(list_ == nullptr){
+        return;
+    }
+
+    Node* temp_node = list_->next_;
+    delete list_;
+    list_ = temp_node;
+}
+
+Node *HybridTable::findPreviousNode(Node *node) {
+    Node* previous_node = list_;
+    Node* current_node = list_;
+
+    while(current_node != nullptr){
+        if(node == current_node){
+            break;
+        }
+        previous_node = current_node;
+        current_node = current_node->next_;
+    }
+
+    return previous_node;
+}
+
 void HybridTable::deleteAllNodes() {
     while(list_ != nullptr){
         Node* temp_node = list_;
@@ -297,6 +338,69 @@ string HybridTable::listAsString() const {
     return out_string;
 }
 
+int HybridTable::calcNewArraySize() {
+    int out_size = total_array_size;
+    int used_size = total_array_size;
+    int new_size = nextPossibleArraySize(out_size);
+
+    Node* current_node = list_;
+    while(current_node != nullptr){
+        int current_node_index = current_node->index_;
+        if((current_node_index < new_size) && (current_node_index >= 0)){
+            used_size ++;
+        }
+
+        float calc_percent = calcPercent(used_size, new_size);
+        if(calc_percent >= 75.0f){
+            out_size = new_size;
+            used_size = out_size;
+        }
+
+        if(current_node_index >= new_size){
+            new_size = nextPossibleArraySize(new_size);
+        }
+        current_node = current_node->next_;
+    }
+
+    return out_size;
+}
+
+int HybridTable::nextPossibleArraySize(int size) {
+    int current_power = ceil(sqrt(size));
+    if(pow(2, current_power) <= size){
+        current_power += 1;
+    }
+
+    return pow(2, current_power);
+}
+
 float HybridTable::calcPercent(const int num1, const int num2) {
     return (((float)num1 / (float)num2) * 100.0f);
+}
+
+void HybridTable::resizeArray(int size) {
+    int old_size = total_array_size;
+    total_array_size = size;
+    int* temp_array = new int[total_array_size]{0};
+    for(int itr=0; itr<old_size; itr++){
+        temp_array[itr] = array_[itr];
+    }
+    delete [] array_;
+    array_ = temp_array;
+
+
+    Node* current_node = list_;
+    while(current_node != nullptr){
+        Node* next_node = current_node->next_;
+        int current_node_index = current_node->index_;
+        if(current_node_index > size){
+            break;
+        }
+        if((current_node_index < size) && (current_node_index >= 0)){
+            array_[current_node_index] = current_node->val_;
+            removeNode(current_node);
+        }
+        current_node = next_node;
+    }
+
 }

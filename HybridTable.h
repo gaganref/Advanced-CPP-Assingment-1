@@ -86,7 +86,7 @@ private:
 	// add other member variables if required
 
     int total_array_size = 0; // To keep track of current size
-    int used_array_size = 0; // To keep track of how much is used
+//    int used_array_size = 0; // To keep track of how much is used
 
 
 	// add other member functions if required
@@ -100,6 +100,9 @@ private:
     void insertNodeAfter(Node* location, int index, int val);
     void insertNodeAtIndex(int index, int val);
     void removeNodeAfter(Node* node);
+    void removeNode(Node* node);
+    void removeHeadNode();
+    Node* findPreviousNode(Node* node);
     void deleteAllNodes();
     string listAsString() const;
 
@@ -109,7 +112,10 @@ private:
     bool findAndReplace(int index, int val);
     static int possibleArraySize(int index);
 
-    static float calcPercent(const int num1, const int num2);
+    int calcNewArraySize();
+    int nextPossibleArraySize(int size);
+    float calcPercent(int num1, int num2);
+    void resizeArray(int size);
 
 };
 
