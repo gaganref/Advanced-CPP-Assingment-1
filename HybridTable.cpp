@@ -353,11 +353,11 @@ int HybridTable::calcNewArraySize() {
         float calc_percent = calcPercent(used_size, new_size);
         if(calc_percent >= 75.0f){
             out_size = new_size;
-            used_size = out_size;
         }
 
         if(current_node_index >= new_size){
             new_size = nextPossibleArraySize(new_size);
+            used_size++;
         }
         current_node = current_node->next_;
     }
