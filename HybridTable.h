@@ -85,36 +85,63 @@ private:
 
 	// add other member variables if required
 
-    int total_array_size = 0; // To keep track of current size
-//    int used_array_size = 0; // To keep track of how much is used
-
+    int total_array_size = 0; // To keep track of current array size
 
 	// add other member functions if required
 
     // Linked List Helper Functions
 
+    // copies the whole list from other hybrid table list
+    // Note: do only use to copy values of whole linked list
+    void copyWholeList(Node* otherList);
+
+    // returns the total number of elements in the list part
     int getListLength() const;
+
+    // finds a node in the list using index
     Node* getNode(int index) const;
-    void setNode(int index, int val);
+
+    // inserts a node at the start of the list
     void insertHead(int index, int val);
+
+    // inserts node after the given node
     void insertNodeAfter(Node* location, int index, int val);
+
+    // inserts a node into the list using index
     void insertNodeAtIndex(int index, int val);
+
+    // deletes node after a given node
     void removeNodeAfter(Node* node);
+
+    // deletes the given node
     void removeNode(Node* node);
+
+    // deletes the head node
     void removeHeadNode();
+
+    // finds the previous node of the given node
     Node* findPreviousNode(Node* node);
+
+    // deletes all nodes in the list (kin of a destructor for the whole list)
     void deleteAllNodes();
+
+    // returns the list part as string
     string listAsString() const;
 
     // checks if the index is available in the list and the array
     // replaces the value of it with new value returns true
     // or else return false
     bool findAndReplace(int index, int val);
-    static int possibleArraySize(int index);
 
+    // returns a new array size if the array can be expanded
+    // or else returns the current array size
     int calcNewArraySize();
+
+    // calculates the new possible array size int powers of 2
     int nextPossibleArraySize(int size);
     float calcPercent(int num1, int num2);
+
+    // resizes the whole array and the list with the new size
     void resizeArray(int size);
 
 };
