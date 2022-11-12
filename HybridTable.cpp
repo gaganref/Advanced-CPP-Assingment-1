@@ -1,5 +1,4 @@
 #include "HybridTable.h"
-#include "iostream"
 #include "cmath"
 
 using namespace std;
@@ -26,48 +25,32 @@ HybridTable::HybridTable() {
     list_ = nullptr;
 }
 
-HybridTable::HybridTable(const int *p, int n) {
-    total_array_size = n;
-    array_ = new int[total_array_size];
-    for (int itr = 0; itr < total_array_size; itr++) {
-        array_[itr] = p[itr];
-    }
-
+HybridTable::HybridTable(const int* p, int n) {
+    createAndCopyArray(p, n);
     list_ = nullptr;
 }
 
 HybridTable::~HybridTable() {
-    // Destructor to be implemented
-
     delete [] array_;
     deleteAllNodes();
 }
 
 HybridTable::HybridTable(const HybridTable& other) {
-    total_array_size = other.total_array_size;
-    array_ = new int[total_array_size];   // initialize a new array with the other array size
-
-    for (int itr = 0; itr < total_array_size; itr++) {
-        array_[itr] = other.array_[itr];  // copy the values of other array
-    }
-
+    // Copy new values
+    createAndCopyArray(other.array_, other.total_array_size);
     list_ = nullptr;
     copyWholeList(other.list_);
 }
 
 HybridTable& HybridTable::operator=(const HybridTable& other) {
 	if(this != &other){ //To make sure the object is assigning to itself (ex: x=x)
+
         //delete previous values
         delete [] array_;
         deleteAllNodes();
 
-        total_array_size = other.total_array_size;
-        array_ = new int[total_array_size];   // initialize a new array with the other array size
-
-        for (int itr = 0; itr < total_array_size; itr++) {
-            array_[itr] = other.array_[itr];  // copy the values of other array
-        }
-
+        //copy new values
+        createAndCopyArray(other.array_, other.total_array_size);
         list_ = nullptr;
         copyWholeList(other.list_);
     }
@@ -76,7 +59,7 @@ HybridTable& HybridTable::operator=(const HybridTable& other) {
 }
 
 int HybridTable::get(int i) const {
-	if((i < total_array_size) && (i >= 0)){
+	if((i < total_array_size) && (i >= 0)){  //Check if the index is valid array_ index
         return array_[i];
     }
 
@@ -127,11 +110,12 @@ int HybridTable::getTotalSize() const {
 }
 
 bool HybridTable::findAndReplace(const int index, const int val) {
-    if((index < total_array_size) & (index >= 0)){
+    if((index < total_array_size) & (index >= 0)){  // checks if the index is between 0 and total array size
         array_[index] = val;
         return true;
     }
 
+    // checks if the node is available and changes
     Node* node = getNode(index);
     if(node != nullptr){
         node->val_ = val;
@@ -144,21 +128,24 @@ bool HybridTable::findAndReplace(const int index, const int val) {
 int HybridTable::calcNewArraySize() {
     int out_size = total_array_size;
     int used_size = total_array_size;
-    int new_size = nextPossibleArraySize(out_size);
+    int next_size = nextPossibleArraySize(out_size);
 
     Node* current_node = list_;
     while(current_node != nullptr){
         int current_node_index = current_node->index_;
-        if((current_node_index < new_size) && (current_node_index >= 0)){
+
+        // increment used size if the current index is valid in new size
+        if((current_node_index < next_size) && (current_node_index >= 0)){
             used_size ++;
         }
 
-        if(calcPercent(used_size, new_size) >= 75.0f){
-            out_size = new_size;
+        // if the used size percent is greater than or equal to 75 change out_size to new_size
+        if(calcPercent(used_size, next_size) >= 75.0f){
+            out_size = next_size;
         }
 
-        if(current_node_index >= new_size){
-            new_size = nextPossibleArraySize(new_size);
+        if(current_node_index >= next_size){
+            next_size = nextPossibleArraySize(next_size);
             used_size++;
         }
         current_node = current_node->next_;
@@ -167,10 +154,60 @@ int HybridTable::calcNewArraySize() {
     return out_size;
 }
 
+int HybridTable::nextPossibleArraySize(int size) {
+    int current_power = ceil(sqrt(size));
+    if(pow(2, current_power) <= size){
+        current_power += 1;
+    }
+
+    return pow(2, current_power);
+}
+
+void HybridTable::resizeArray(int size) {
+    int old_size = total_array_size;
+    total_array_size = size;
+
+    int* temp_array = new int[total_array_size]{0}; // create an array with new size
+    for(int itr=0; itr<old_size; itr++){
+        temp_array[itr] = array_[itr];  // copy values from previous array
+    }
+    delete [] array_;
+    array_ = temp_array;
+
+
+    Node* current_node = list_;
+    while(current_node != nullptr){
+        Node* next_node = current_node->next_;
+        int current_node_index = current_node->index_;
+
+        if(current_node_index > size){
+            break;
+        }
+
+        // if the list index is a valid new array index copy the value to array and remove it from the list
+        if((current_node_index < size) && (current_node_index >= 0)){
+            array_[current_node_index] = current_node->val_;
+            removeNode(current_node);
+        }
+
+        current_node = next_node;
+    }
+
+}
+
+void HybridTable::createAndCopyArray(const int* otherArray, int otherArraySize) {
+    total_array_size = otherArraySize;
+    array_ = new int[total_array_size]; // initialize a new array with the other array size
+    for (int itr = 0; itr < total_array_size; itr++) {
+        array_[itr] = otherArray[itr]; //copy the values of other array
+    }
+}
+
 void HybridTable::copyWholeList(Node* otherList) {
     if(otherList == list_){
         return;
     }
+    // first copy the head node and then loop through the remaining nodes
     if(otherList != nullptr){
         Node* other_current = otherList;
         list_ = new Node(other_current->index_, other_current->val_);
@@ -207,6 +244,11 @@ Node *HybridTable::getNode(int index) const {
     return nullptr;
 }
 
+void HybridTable::insertHead(int index, int val) {
+    Node* new_node = new Node(index, val, list_);
+    list_ = new_node;
+}
+
 void HybridTable::insertNodeAfter(Node* location, int index, int val) {
     if(location == nullptr){
         return;
@@ -216,6 +258,27 @@ void HybridTable::insertNodeAfter(Node* location, int index, int val) {
         new_node->next_ = location->next_;
     }
     location->next_ = new_node;
+}
+
+void HybridTable::insertNodeAtIndex(int index, int val) {
+    if((list_ == nullptr) || (index < list_->index_)){   // insert into the head node if it null or the current index is less than head
+        insertHead(index, val);
+        return;
+    }
+
+    // find the possible insert location such that the list should be in increasing order
+    Node* current_node = list_;
+    Node* possible_location = current_node;
+    while(current_node != nullptr){
+        if(current_node->index_ <= index){
+            possible_location = current_node;
+        }
+        else{
+            break;
+        }
+        current_node = current_node->next_;
+    }
+    insertNodeAfter(possible_location, index, val);
 }
 
 void HybridTable::removeNodeAfter(Node* node) {
@@ -252,7 +315,7 @@ void HybridTable::removeHeadNode() {
     list_ = temp_node;
 }
 
-Node *HybridTable::findPreviousNode(Node *node) {
+Node *HybridTable::findPreviousNode(Node* node) {
     Node* previous_node = list_;
     Node* current_node = list_;
 
@@ -275,35 +338,6 @@ void HybridTable::deleteAllNodes() {
     }
 }
 
-void HybridTable::insertHead(int index, int val) {
-    Node* new_node = new Node(index, val, list_);
-    list_ = new_node;
-}
-
-void HybridTable::insertNodeAtIndex(int index, int val) {
-    if(list_ == nullptr){
-        insertHead(index, val);
-        return;
-    }
-    if(index < list_->index_){
-        insertHead(index, val);
-        return;
-    }
-
-    Node* current_node = list_;
-    Node* possible_location = current_node;
-    while(current_node != nullptr){
-        if(current_node->index_ <= index){
-            possible_location = current_node;
-        }
-        else{
-            break;
-        }
-        current_node = current_node->next_;
-    }
-    insertNodeAfter(possible_location, index, val);
-}
-
 string HybridTable::listAsString() const {
     string out_string;
     Node* current_head = list_;
@@ -317,42 +351,6 @@ string HybridTable::listAsString() const {
         itr++;
     }
     return out_string;
-}
-
-void HybridTable::resizeArray(int size) {
-    int old_size = total_array_size;
-    total_array_size = size;
-    int* temp_array = new int[total_array_size]{0};
-    for(int itr=0; itr<old_size; itr++){
-        temp_array[itr] = array_[itr];
-    }
-    delete [] array_;
-    array_ = temp_array;
-
-
-    Node* current_node = list_;
-    while(current_node != nullptr){
-        Node* next_node = current_node->next_;
-        int current_node_index = current_node->index_;
-        if(current_node_index > size){
-            break;
-        }
-        if((current_node_index < size) && (current_node_index >= 0)){
-            array_[current_node_index] = current_node->val_;
-            removeNode(current_node);
-        }
-        current_node = next_node;
-    }
-
-}
-
-int HybridTable::nextPossibleArraySize(int size) {
-    int current_power = ceil(sqrt(size));
-    if(pow(2, current_power) <= size){
-        current_power += 1;
-    }
-
-    return pow(2, current_power);
 }
 
 float HybridTable::calcPercent(const int num1, const int num2) {

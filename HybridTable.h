@@ -89,6 +89,29 @@ private:
 
 	// add other member functions if required
 
+    // Hybrid Table helper functions
+
+    // checks if the index is available in the list and the array
+    // replaces the value of it with new value returns true
+    // or else return false
+    bool findAndReplace(int index, int val);
+
+    // returns a new array size if the array can be expanded
+    // or else returns the current array size
+    int calcNewArraySize();
+
+    // calculates the new possible array size int powers of 2
+    int nextPossibleArraySize(int size);
+
+    // resizes the whole array and the list with the new size
+    void resizeArray(int size);
+
+    // Array helper functions
+
+    // initializes array_ and copies the values of other array_ to this array_
+    void createAndCopyArray(const int* otherArray, int otherArraySize);
+
+
     // Linked List Helper Functions
 
     // copies the whole list from other hybrid table list
@@ -128,21 +151,9 @@ private:
     // returns the list part as string
     string listAsString() const;
 
-    // checks if the index is available in the list and the array
-    // replaces the value of it with new value returns true
-    // or else return false
-    bool findAndReplace(int index, int val);
 
-    // returns a new array size if the array can be expanded
-    // or else returns the current array size
-    int calcNewArraySize();
-
-    // calculates the new possible array size int powers of 2
-    int nextPossibleArraySize(int size);
+    // General helper function
     float calcPercent(int num1, int num2);
-
-    // resizes the whole array and the list with the new size
-    void resizeArray(int size);
 
 };
 
